@@ -1,0 +1,12 @@
+/src/.merlin
+/src/.mirage.config
+/src/dune.config
+/src/dune.build
+/src/dune
+/src/Makefile
+/src/mirage-unikernel-metabot-*.opam
+/src/key_gen.ml
+/src/myocamlbuild.ml
+/src/main.*
+/src/metabot
+_build
