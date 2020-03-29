@@ -1,7 +1,8 @@
 PKG lwt mirage mirage-unix tcpip mirage-http mirage-stack
 PKG mirage-net mirage-net-macosx mirage-clock-unix mirage-console.unix
 PKG conduit conduit-mirage
-PKG cohttp cohttp-lwt cohttp-mirage
+PKG cohttp cohttp-lwt cohttp-mirage yojson
+PKG digestif checkseum uuidm
 
 B src/_build/**
 S src/

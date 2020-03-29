@@ -1,0 +1,2 @@
+true: package(digestif.c)
+true: package(ppx_deriving.std)
