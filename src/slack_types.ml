@@ -10,13 +10,16 @@ module Response = Cohttp.Response
 
 exception Invalid_signature
 
+type json = Yojson.Basic.t
+(** JSON-formatted data. *)
+
 type uuid = Uuidm.t
 (** Unique identifier of a registered event handler. *)
 
 type event_type = [ `Message | `App_Mention ] [@@deriving show]
 (** Slack event type. *)
 
-type event_body = Yojson.Basic.t
+type event_body = json
 (** Slack event body. *)
 
 type event_handler =

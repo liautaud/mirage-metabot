@@ -26,4 +26,30 @@ module Make (Clock : PCLOCK) (Server : SERVER) : sig
 
   val unregister : t -> uuid -> unit
   (** Unregisters the event handler with the given uuid. *)
+
+  val post_message :
+    t ->
+    channel:string ->
+    text:string ->
+    ?attachments:Yojson.Basic.t ->
+    ?blocks:Yojson.Basic.t ->
+    ?link_names:bool ->
+    ?markdown:bool ->
+    ?reply_broadcast:bool ->
+    ?thread_ts:string ->
+    ?username:string ->
+    unit ->
+    unit Lwt.t
+  (** Sends a message to a Slack workspace.
+
+      - [channel]: Channel, private group, or IM channel to send message to.
+      - [text]: Full text of the message (or fallback when used with [blocks]).
+      - [attachments]: JSON-based array of structured attachments.
+      - [blocks]: JSON-based array of structured blocks.
+      - [link_names]: Whether to find and link channel names and usernames.
+      - [markdown]: Whether the Markdown tags in [text] will be parsed.
+      - [reply_broadcast]: When [thread_ts] is used, indicates whether reply
+        should be made visible to everyone in the channel or conversation.
+      - [reply_ts]: Used in threads only, [ts] of the parent message.
+      - [username]: A custom user name displayed along the message. *)
 end

@@ -1,6 +1,8 @@
 open Lwt.Infix
 include Slack_types
 
+let slack_base = Uri.of_string "https://slack.com/"
+
 module Make (Clock : PCLOCK) (Server : SERVER) = struct
   type t = {
     ctx : Client.ctx;
@@ -93,7 +95,15 @@ module Make (Clock : PCLOCK) (Server : SERVER) = struct
         Hashtbl.find_all t.handlers_by_type event_type
         |> List.map (Hashtbl.find t.handlers)
         |> List.map (fun h ->
-               h ~app_id ~team_id ~event_type ~event_id ~event_time event_body)
+               (* Ignore failures from registered handlers. *)
+               Lwt.catch
+                 (fun () ->
+                   h ~app_id ~team_id ~event_type ~event_id ~event_time
+                     event_body)
+                 (fun e ->
+                   Logs.err (fun f ->
+                       f "Handler failed: %s" (Printexc.to_string e));
+                   Lwt.return_unit))
         |> Lwt.join
         >>= fun () -> Server.respond_string ~status:`OK ~body:"" ()
 
@@ -108,4 +118,44 @@ module Make (Clock : PCLOCK) (Server : SERVER) = struct
       (fun _ v -> if Uuidm.equal v uuid then None else Some v)
       t.handlers_by_type;
     Hashtbl.remove t.handlers uuid
+
+  (* Posts JSON data to the Slack API. *)
+  let post_json t path data =
+    let open Yojson.Basic.Util in
+    let flatten =
+      List.filter_map (fun (x, y) -> Option.map (fun y -> (x, y)) y)
+    in
+    let headers = Header.init_with "content-type" "application-json" in
+    let uri = Uri.with_path slack_base path in
+    let data = `Assoc (("token", `String t.bot_token) :: flatten data) in
+    let body = Yojson.Basic.to_string data in
+    Logs.info (fun f -> f "Sending API request to %a" Uri.pp uri);
+    Logs.debug (fun f -> f "Body: %s" body);
+    Client.post ~ctx:t.ctx ~body:(Body.of_string body) ~headers uri
+    >>= fun (res, body) ->
+    (* Check the response status. *)
+    Body.to_string body >>= fun body ->
+    Logs.debug (fun f -> f "Response: %a" Response.pp_hum res);
+    Logs.debug (fun f -> f "Response body: %s" body);
+    let payload = Yojson.Basic.from_string body in
+    if payload |> member "ok" |> to_bool then Lwt.return_unit
+    else
+      let error = payload |> member "error" |> to_string in
+      Lwt.fail_with (Printf.sprintf "Slack API failed: %s" error)
+
+  let post_message t ~channel ~text ?attachments ?blocks ?(link_names = true)
+      ?(markdown = true) ?(reply_broadcast = false) ?thread_ts ?username () =
+    let to_json_string s = `String s in
+    post_json t "api/chat.postMessage"
+      [
+        ("channel", Some (`String channel));
+        ("text", Some (`String text));
+        ("attachments", attachments);
+        ("blocks", blocks);
+        ("link_names", Some (`Bool link_names));
+        ("markdown", Some (`Bool markdown));
+        ("reply_brodcast", Some (`Bool reply_broadcast));
+        ("thread_ts", Option.map to_json_string thread_ts);
+        ("username", Option.map to_json_string username);
+      ]
 end

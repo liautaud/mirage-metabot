@@ -83,9 +83,10 @@ struct
              ~event_time:_
              event_body
              ->
-          Logs.info (fun f ->
-              f "YOU'VE GOT MAIL\n!%a" Yojson.Basic.pp event_body);
-          Lwt.return_unit)
+          let open Yojson.Basic.Util in
+          let channel = event_body |> member "channel" |> to_string in
+          let text = event_body |> member "text" |> to_string in
+          Api.post_message api ~channel ~text ())
     in
     motd ctx >>= fun () -> start_http routes server
 end
