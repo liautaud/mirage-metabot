@@ -74,7 +74,7 @@ module Make (Clock : PCLOCK) (Server : SERVER) = struct
     match challenge with
     | Some c ->
         (* Respond to the Slack API challenge if needed. *)
-        Logs.info (fun f -> f "Received Slack challenge %s." c);
+        Logs.info (fun f -> f "Received Slack challenge %s" c);
         Server.respond_string ~status:`OK ~body:c ()
     | None ->
         (* Dispatch the event to all the event handlers. *)
@@ -87,7 +87,7 @@ module Make (Clock : PCLOCK) (Server : SERVER) = struct
           json |> member "event" |> member "type" |> to_string |> to_event_type
         in
         Logs.info (fun f ->
-            f "Received Slack event %s (of type %a)." event_id pp_event_type
+            f "Received Slack event %s (of type %a)" event_id pp_event_type
               event_type);
 
         Hashtbl.find_all t.handlers_by_type event_type

@@ -34,11 +34,11 @@ struct
     get_ip ctx >|= fun ip ->
     let port = Key_gen.port () in
     let base = Format.sprintf "http://%s:%d" ip port in
-    Logs.info (fun f -> f "Listening for HTTP requests on 0.0.0.0:%d." port);
+    Logs.info (fun f -> f "Listening for HTTP requests on 0.0.0.0:%d" port);
     Logs.info (fun f ->
         f "Your IP is %s, so you should be able to access these URLs:" ip;
-        f " * %s/authorize  [Adds the bot to your Slack workspace.]" base;
-        f " * %s/events     [Handles incoming Slack events.]" base)
+        f " * %s/authorize  [Adds the bot to your Slack workspace]" base;
+        f " * %s/events     [Handles incoming Slack events]" base)
 
   (** Starts the HTTP server. *)
   let start_http routes server =
@@ -47,7 +47,7 @@ struct
       Body.to_string body >>= fun body ->
       let resource = Request.resource req in
       Logs.debug (fun f ->
-          f "Received a request on %s.\nRequest: %a\nBody: %s" resource
+          f "Received a request on %s\nRequest: %a\nBody: %s" resource
             Request.pp_hum req body);
       match List.assoc_opt resource routes with
       | Some c -> c conn req body
